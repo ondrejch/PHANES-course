@@ -1,6 +1,6 @@
-# PHANES lecture revision 2
+# PHANES course lectures
 
-Eight PDF lecture decks with editable Beamer sources and instructor notes. UT Austin burnt orange (#BF5700), white and charcoal; each slide has a title. This revision adds topic foundations in module 1, concrete compliance scenarios in module 2, a complete software development agent loop and permissions in module 3, and a worked OpenMC teaching model in module 4. Tables use explicit column widths and ragged-right text. No PowerPoint files are included.
+Eight PDF lecture decks with editable Beamer sources and instructor notes. UT Austin burnt orange (#BF5700), white and charcoal; each slide has a title. The modules include topic foundations in module 1, concrete compliance scenarios in module 2, a complete software development agent loop and permissions in module 3, and a worked OpenMC teaching model in module 4. Tables use explicit column widths and ragged-right text. No PowerPoint files are included.
 
 ## Syllabus & Curriculum
 
