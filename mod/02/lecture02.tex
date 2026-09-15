@@ -1,0 +1,280 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{02}
+\title{Responsible nuclear AI}
+\subtitle{Specific regulatory questions, information flows, and review evidence}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{Start with the actual transfer, not the product label}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Specify the information and activity: published report, input deck, geometry, design analysis, debugging assistance, or derived result.
+\item Identify the people and organizations that may receive or access it, including support and administrators.
+\item Map the endpoint, tools, logs, storage, backups, and onward sharing.
+\item Determine the applicable regulatory route and project restrictions before using a real nonpublic case.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: utexport. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Three federal routes are not interchangeable}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Route} & \textbf{Specific screening question} \\ \midrule
+DOE / Part 810 & Is the activity covered nuclear assistance or a technology transfer within the rule's scope? \\[2pt]
+NRC / Part 110 & Does the transaction involve covered nuclear equipment or material exports/imports? \\[2pt]
+Commerce / EAR & Is the relevant software, technology, equipment, or release subject to Commerce jurisdiction? \\[2pt]
+Project restrictions & Do contracts, confidentiality, sponsor conditions or institutional policies add limits? \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810scope, 110, earrelease. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Part 810 scope includes reactor-development technology}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Section 810.2 addresses covered participation in foreign special-nuclear-material activities and related technology transfers.
+\item Its listed activities include reactor development and specified reactor-related components, as well as fuel-cycle work.
+\item Relevant technology can move through design analysis, instruction, consulting, or technical data.
+\item A model-assisted review of a nonpublic reactor input deck is therefore a question to screen, even if the API server is physically in the United States.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810scope, 810definitions. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Read the rule in a useful order}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-3.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.8\linewidth-12.8pt\relax}}
+\toprule
+\textbf{Provision} & \textbf{What it helps establish} \\ \midrule
+810.2 & Scope and exclusions; identify whether the material/activity is covered. \\[2pt]
+810.3 & Definitions that give legal meaning to public availability, research and assistance. \\[2pt]
+810.6 / 810.7 & General-authorization conditions versus activities requiring specific authorization. \\[2pt]
+810.12 & Reporting obligations associated with the applicable authorized activity. \\[2pt]
+810.5 & How to request DOE advice or an authoritative written interpretation. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810scope, 810definitions, 810general, 810specific, 810reports, 810interpret. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Screening an engineering workflow under Part 810}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.22\linewidth-3.52pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.78\linewidth-12.48pt\relax}}
+\toprule
+\textbf{Screening step} & \textbf{Assessment and routing criterion} \\ \midrule
+1. Scope screening & Does the workflow touch nuclear fuel-cycle or reactor technology under \S{}810.2? If not, Part 810 does not apply. \\[2pt]
+2. Exclusion check & Is the material publicly available with provenance, or fundamental research under \S{}810.2(c)(2) and \S{}810.3? If yes, it is excluded. \\[2pt]
+3. General authorization & Is the activity listed under \S{}810.6 (Appendix A destination or NRC licensee employee access)? If yes, general authorization applies. \\[2pt]
+4. Reporting check & Generally authorized activities require a \S{}810.12 report within 30 days of initiation. \\[2pt]
+5. Specific authorization & Non-Appendix destinations or sensitive technologies require DOE specific authorization under \S{}810.7 before any transfer. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810scope, 810general, 810specific, 810reports. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{The public-information exclusion needs provenance}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Section 810.2(c)(2) excludes certain public information/technology transfers and fundamental-research results from Part 810.
+\item Retain the publication, source URL, date, and evidence that the exact material is publicly available.
+\item Do not assume that private annotations, unpublished dimensions, or partner results inherit the status of the public source.
+\item For a mixed prompt, inventory each component and remove or review the nonpublic additions.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810scope, 810definitions. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Fundamental research is a defined condition}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Part 810's definition concerns research whose results are ordinarily published and broadly shared, distinguished from restricted proprietary work.
+\item "At a university" and "we plan to publish later" do not resolve every input, contract, or disclosure restriction.
+\item For EAR analysis, \S{}734.8 also distinguishes research outputs from controlled material supplied to conduct the research.
+\item Bring the sponsor agreement and publication restrictions to the review; do not classify a project solely from its academic title.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810definitions, earresearch. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Worked case: public paper plus partner dimensions}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Input A: a public reactor-physics paper. Input B: a partner's unpublished fuel-layout table under an agreement.
+\item The intended prompt asks the API to compare the partner design with the paper.
+\item The transfer package now includes B and any excerpts derived from it; a citation to A does not establish B's status.
+\item Proposed interim action: use a synthetic layout for the class example and send the mixed-case facts for review.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{General authorization still has conditions}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Section 810.6 provides general authorization for specified activities when its conditions and exclusions are satisfied.
+\item The Appendix country/entity route is subject to the rule's limitations, including the sensitive-technology restrictions.
+\item The NRC-facility employment/access route has its own explicit conditions; it is not a blanket rule for all university collaborations.
+\item Document which paragraph applies and check associated reporting and onward-transfer obligations.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810general. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Specific authorization must precede covered activity}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Section 810.7 identifies circumstances requiring a specific DOE authorization before the activity.
+\item These include certain non-Appendix destinations and sensitive technologies, plus the activities enumerated in that section.
+\item A vendor's general claim of US hosting does not identify the applicable authorization route.
+\item If the route is unresolved, prepare the facts and use an approved public/synthetic alternative while the institution resolves it.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810specific. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Authorization and reporting are separate checks}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Section 810.12 includes reports due within 30 calendar days after beginning generally or specifically authorized activities, subject to its provisions.
+\item The section also addresses completion/termination and other reporting situations.
+\item Assign the reporting owner, start-date record, recipient details, and evidence of any required agreement.
+\item Students document the workflow; the institution determines who submits and maintains the official record.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810reports. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{US location is one fact among several}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.27\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.73\linewidth-11.68pt\relax}}
+\toprule
+\textbf{Question} & \textbf{Why it changes the review} \\ \midrule
+Where is processing? & Identifies the computation and possible cross-border transmission. \\[2pt]
+Who can access it? & Administrative, support, collaborator and subcontractor access may matter. \\[2pt]
+What can be recovered? & Prompt logs, snapshots, backups and crash dumps can contain the same material. \\[2pt]
+Where can it go next? & Agent tools, replication, export features and onward sharing create additional paths. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A domestic disclosure can still require analysis}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item EAR \S{}734.13 includes certain releases of technology or source code to a foreign person inside the United States in its export definition.
+\item Part 810 has its own scope, recipient definitions and exclusions; do not import EAR shorthand as the complete Part 810 test.
+\item Nationality alone is not a sufficient classroom decision rule. The material, activity, and legal status also matter.
+\item Have the institution assess the actual team and access arrangement rather than asking an agent to decide eligibility.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: earrelease, 810scope. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Inventory the bytes an agent workflow produces}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Artifact} & \textbf{Concrete example to include in the map} \\ \midrule
+Prompt + attachments & Geometry excerpts, material definitions, error traces and user annotations. \\[2pt]
+Tool traffic & Search query text, remote shell arguments, embedding requests or uploaded files. \\[2pt]
+Derived artifacts & Summaries, vector indexes, generated input decks and result tables. \\[2pt]
+Operational copies & TUI session databases, server request logs, backups and support bundles. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Worked map: OpenCode plus a private LLM}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Laptop $\rightarrow$ inference: prompt, selected repository text, and previous tool results.
+\item Laptop $\rightarrow$ solver: local files and a command; solver $\rightarrow$ laptop: logs and statepoint results.
+\item Laptop $\rightarrow$ search: query terms, if search is enabled. This is an independent external transmission.
+\item Record the allowed data classes for each arrow, the account involved, and the retained copies.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Ask providers questions that require evidence}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-3.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.8\linewidth-12.8pt\relax}}
+\toprule
+\textbf{Topic} & \textbf{A specific question} \\ \midrule
+Training use & Are submitted prompts, files and outputs used for training under the applicable contract? \\[2pt]
+Retention & Which request and operational records persist, for how long, and under what exceptions? \\[2pt]
+Access & Which personnel, locations and subprocessors can access plaintext or recoverable copies? \\[2pt]
+Isolation & Which technical and contractual controls separate our allocation and administration? \\[2pt]
+Change control & How are changes to locations, access, terms or subprocessors communicated? \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Encryption addresses a defined part of the path}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item TLS protects transport between authenticated endpoints; it does not prevent the endpoint process from seeing plaintext.
+\item Disk encryption protects stored media under its key-management assumptions; administrators may still have application-level access.
+\item Confidential-computing designs require evidence about attestation, key release, GPU/CPU coverage, logs, and residual access.
+\item Evaluate the threat model and legal authority separately; a product label is not the completed review.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Deployment options are information-flow controls}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.22\linewidth-5.28pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.44\linewidth-10.56pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.34\linewidth-8.16pt\relax}}
+\toprule
+\textbf{Option} & \textbf{Control you gain} & \textbf{What you give up} \\ \midrule
+Commercial / cloud API & Provider terms decide retention, access and revision. & Fastest start; least control over where bytes travel. \\[2pt]
+Facility-hosted & Endpoint, logs and access follow project policy. & The institution carries serving operations (module 06). \\[2pt]
+On-premises / local & Bytes stay on approved hosts; the boundary is the machine. & You own the full stack: hardware, maintenance, recovery. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Write a technology-control proposal}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-3.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.8\linewidth-12.8pt\relax}}
+\toprule
+\textbf{Control} & \textbf{Concrete project implementation} \\ \midrule
+Approved data & A manifest of permitted public/synthetic inputs plus owner and revision. \\[2pt]
+Access & Named project accounts, least privilege, access review and removal procedure. \\[2pt]
+Egress & Reviewed tool destinations; network controls where the project requires enforcement. \\[2pt]
+Retention & Documented session/log storage, access, cleanup and backup handling. \\[2pt]
+Change trigger & New material, collaborator, operator, model endpoint, or external tool. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: utexport. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Worked decision memo: what can be concluded?}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Known: the source report is public; the proposed endpoint and its stated retention terms are identified.
+\item Unknown: whether a support subcontractor can access request logs and whether the private annotations are within an exclusion.
+\item Recommendation: use only the public source for the class demonstration; hold the annotated case for institutional review.
+\item Decision requested: determine the annotated material's status and whether the documented access arrangement is authorized.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Know what kind of answer a reviewer can give}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The institution can coordinate jurisdiction, project restrictions and the proposed handling arrangement.
+\item Under \S{}810.5, DOE advice can be requested about scope and authorization; the provision distinguishes advice from a binding interpretation.
+\item Retain the written response and the facts on which it relied.
+\item Reopen the question when those facts change; do not treat a past answer as blanket approval for a different workflow.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: 810interpret, utexport. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{If a workflow crosses the agreed boundary}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Stop the affected transfer or tool integration and preserve the factual timeline.
+\item Record what material moved, to which destination, through which account, and which copies may remain.
+\item Contact the institutional reporting/response channel and follow its instructions.
+\item Do not let an agent delete evidence, invent a compliance conclusion, or contact third parties without an authorized response plan.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Lab: produce a reviewable boundary package}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Submit a data inventory, information-flow map, source/contract evidence, and a one-page decision memo.
+\item Analyze a public-document case, a mixed public/private case, a private-LLM/external-tool case, and a multinational-team case.
+\item For each, separate scope/exclusion analysis, authorization route, reporting ownership, and architecture controls.
+\item Grade success by completeness and correct routing, including explicit unknowns and proposed interim controls.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Sample submission: the boundary package}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Package structure: a data inventory (one row per data class), an information-flow map, one section per case, a one-page decision memo; the cases are synthetic.
+\item Public-document case: the scope analysis records the public status with source citations; the authorization route is stated as a working assumption pending institutional review.
+\item Mixed public/private case: the private input determines the package status; the memo names the unknowns and proposes a synthetic substitute as the interim control.
+\item Private-LLM/external-tool case: model-provider access is separated from tool-side destinations; controls include scoped tool permissions and a retained evidence manifest.
+\item Multinational-team case: the access and recoverability questions drive the analysis; the interim control restricts the workflow to approved material.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\item \textbf{utexport}: \href{https://research.utexas.edu/resources/research-security/export-control}{research.utexas.edu/resources/research-security/export-control}
+\item \textbf{810scope}: \href{https://www.ecfr.gov/current/title-10/chapter-III/part-810/section-810.2}{ecfr.gov/current/title-10/chapter-III/part-810/section-810.2}
+\item \textbf{110}: \href{https://www.nrc.gov/reading-rm/doc-collections/cfr/part110/index}{nrc.gov/reading-rm/doc-collections/cfr/part110/index}
+\item \textbf{earrelease}: \href{https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-734/section-734.13}{ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-734/section-734.13}
+\item \textbf{810definitions}: \href{https://www.ecfr.gov/current/title-10/chapter-III/part-810/section-810.3}{ecfr.gov/current/title-10/chapter-III/part-810/section-810.3}
+\end{itemize}\end{frame}
+\begin{frame}[t]{References 2}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{810general}: \href{https://www.ecfr.gov/current/title-10/chapter-III/part-810/section-810.6}{ecfr.gov/current/title-10/chapter-III/part-810/section-810.6}
+\item \textbf{810specific}: \href{https://www.ecfr.gov/current/title-10/chapter-III/part-810/section-810.7}{ecfr.gov/current/title-10/chapter-III/part-810/section-810.7}
+\item \textbf{810reports}: \href{https://www.ecfr.gov/current/title-10/chapter-III/part-810/section-810.12}{ecfr.gov/current/title-10/chapter-III/part-810/section-810.12}
+\item \textbf{810interpret}: \href{https://www.ecfr.gov/current/title-10/chapter-III/part-810/section-810.5}{ecfr.gov/current/title-10/chapter-III/part-810/section-810.5}
+\item \textbf{earresearch}: \href{https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-734/section-734.8}{ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-734/section-734.8}
+\end{itemize}\end{frame}
+\end{document}

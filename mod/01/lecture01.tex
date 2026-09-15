@@ -1,0 +1,337 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{01}
+\title{Introduction to agentic engineering}
+\subtitle{What language models do, how agents act, and where engineering evidence enters}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{Why introduce agents in nuclear engineering?}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Engineering work mixes calculations with searches, file preparation, debugging, plotting, and report assembly. Much of the time is spent connecting these steps.
+\item An agent can translate a task into proposed edits and tool calls, inspect the returned evidence, and choose a next step.
+\item Example: prepare an OpenMC case, diagnose a malformed input, run an approved calculation, and assemble a traceable comparison.
+\item Our objective is a reproducible workflow with explicit assumptions, rather than accepting an unverified numerical answer.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{AI, language models, and agents are different}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Term} & \textbf{Working meaning in this course} \\ \midrule
+Machine learning & Parameters are fitted from data so a program can make predictions or generate outputs. \\[2pt]
+Language model & Predicts a distribution over the next token given the supplied token sequence. \\[2pt]
+Token & The smallest unit the model processes: a tokenizer maps text to token identifiers, e.g. 18-bit integers for the Qwen3.8-27B model. \\[2pt]
+Assistant & A model interface shaped by instructions, conversation history, and post-training. \\[2pt]
+Agentic system & A model plus a harness that can execute tools and continue in response to observations. \\[2pt]
+Engineering workflow & A bounded sequence with inputs, methods, acceptance criteria, and retained evidence. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{What is a large language model?}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item An LLM is a transformer neural network trained on large text and code corpora; it learns statistical structure, not a project database.
+\item Its core operation assigns scores to candidate next tokens. Chat, planning, and tool calls are built around that operation by the surrounding system.
+\item It is good at drafting, explaining, rewriting, and producing code or structured output, generalizing from its training distribution.
+\item Its limits are known: plausible but wrong details, a knowledge cutoff, no persistent memory of your project, and no access to your systems at inference.
+\item For engineering use, treat the model as a probabilistic text generator: every number or citation it emits needs harness or user validation.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{The agentic stack has named layers}
+\begin{center}
+\begin{tikzpicture}[node distance=5mm, every node/.style={draw=UTorange,rounded corners,align=center,font=\scriptsize,minimum height=5mm,minimum width=96mm}, >={Stealth}]
+\node (workflow) {\textbf{Engineering workflow}: case files, tools, evidence and acceptance criteria};
+\node[below=of workflow] (tools) {\textbf{Tools and skills}: calculations, search, file edits and tests};
+\node[below=of tools] (harness) {\textbf{Agent harness}: task loop, permissions and context files};
+\node[below=of harness] (api) {\textbf{API endpoint}: OpenAI-compatible interface on the private PHANES node};
+\node[below=of api] (weights) {\textbf{Model weights}: qwen3.8-27b-nvfp4 served by vLLM on GPUs};
+\begin{scope}[transform canvas={xshift=7mm},thick,->]
+\foreach \a/\b in {workflow/tools,tools/harness,harness/api,api/weights}
+  \draw (\a.south) -- (\b.north);
+\end{scope}
+\begin{scope}[transform canvas={xshift=-7mm},thick,->]
+\foreach \a/\b in {tools/workflow,harness/tools,api/harness,weights/api}
+  \draw (\a.north) -- (\b.south);
+\end{scope}
+\end{tikzpicture}
+\end{center}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{1.5mm}
+\item Requests and responses cross layers in both directions; no single layer owns correctness.
+\item Whether the weights and context fit on the GPUs is the budget question; see module 06.
+\item OAK harness (\href{https://github.com/jcarlosrodicio/opencode-agent-orchestration-kit}{opencode-agent-orchestration-kit}) implements the same layered pattern for software engineering; module 03 maps its roles in detail.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Open weights versus hosted models}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.18\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.41\linewidth-9.84pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.41\linewidth-9.84pt\relax}}
+\toprule
+\textbf{Aspect} & \textbf{Open-weight model} & \textbf{Hosted model} \\ \midrule
+Access & You download and host the weights; the PHANES node does this. & The provider holds and runs the weights; you send requests. \\[2pt]
+Data path & You choose endpoint, logs and retention; module 02 maps the boundary. & Requests traverse provider infrastructure under its stated terms. \\[2pt]
+Revision & You pin the served version and update it deliberately. & The model revision may change with provider updates. \\[2pt]
+Serving cost & You plan GPU and memory budgets (module 06 works the numbers). & The provider absorbs serving; you pay for access. \\[2pt]
+Consequence & The information boundary is explicit, as compliance review needs. & Apply module 02's evidence questions to the provider. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A model generates a conditional sequence}
+\[p(x_1,\ldots,x_n)=\prod_{t=1}^{n}p(x_t\mid x_1,\ldots,x_{t-1})\]
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A tokenizer maps text into token identifiers. The model maps a context to scores for possible next tokens.
+\item Sampling or decoding selects a token; that token is appended, and generation repeats. A tool call can be one structured output of this process.
+\item Training adjusts weights. Inference uses the selected weights; adding a file to a prompt does not retrain them.
+\item A plausible continuation can contain a nonexistent API, wrong unit, or unsupported citation. The harness must connect claims to external evidence.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Training stages explain behavior, not authority}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-4.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.75\linewidth-12.0pt\relax}}
+\toprule
+\textbf{Stage} & \textbf{Useful distinction} \\ \midrule
+Pretraining & Learns statistical structure from a large training corpus. It does not provide a current project database. \\[2pt]
+Post-training & Shapes instruction following and other behaviors using additional training signals. \\[2pt]
+Inference-time context & Supplies the current question, instructions, evidence, and tool outputs. \\[2pt]
+Tool execution & Occurs in the external program environment and may read, edit, compute, or communicate. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Attention and caches explain context costs}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Attention uses relationships among token representations to build a contextual representation; many models also use sparse or recurrent mechanisms.
+\item During autoregressive inference, a runtime can retain intermediate state so each new token does not recompute all preceding work.
+\item Long input increases prefill work and consumes runtime state. Long output extends the repeated decode process.
+\item The model's advertised context limit, the server's configured limit, and the capacity available under load are three separate quantities.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{What is inside one request?}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A task contains 2,000 instruction tokens, 9,000 history tokens, 13,000 code tokens, and a reserved 4,096-token output allowance.
+\item For a 32,768-token configured context, calculate the remaining input margin.
+\item A solver returns an 8,000-token log. Decide what to retain verbatim and what to replace with a bounded diagnostic.
+\item Explain why dropping the failed-run status while summarizing the log would corrupt the workflow.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Worked solution: the token margin and log triage}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Remaining margin: $32{,}768 - 2{,}000 - 9{,}000 - 13{,}000 - 4{,}096 = 4{,}672$ tokens before framing overhead.
+\item The 8,000-token log exceeds that margin by 3,328 tokens, so it cannot be forwarded verbatim in the next request.
+\item Keep verbatim: the failed-run status, the exact command, the case identifier, and the error span. Replace the remainder with a bounded diagnostic plus a path to the full local artifact.
+\item Dropping the failure status lets the next agent treat the run as successful and reuse its output; the corrupted quantity is the workflow state, not the log length.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Compare a script, a chat, and an agent}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.16\linewidth-3.84pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.35\linewidth-8.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.49\linewidth-11.76pt\relax}}
+\toprule
+\textbf{Interface} & \textbf{Who chooses the next action?} & \textbf{Engineering consequence} \\ \midrule
+Script & Prewritten control flow & Good for defined repetitive calculations; errors need explicit branches. \\[2pt]
+Chat & User selects each external action & Useful for explanation; a claimed execution still needs evidence. \\[2pt]
+Agent loop & Model proposes; harness applies policy and executes & Can adapt to observations, but requires bounded permissions and validation. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{The agent loop has observable states}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Interpret the task and identify missing inputs; propose a plan with an explicit stopping condition.
+\item Request a tool with structured arguments. The harness checks permission and dispatches the operation.
+\item Read the tool's status and outputs; revise the plan, retry within a budget, or stop with a diagnostic.
+\item Complete only when the requested artifact and acceptance evidence exist. A narrative "done" is not itself a completion condition.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Locate the computation and the data movement}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-4.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.75\linewidth-12.0pt\relax}}
+\toprule
+\textbf{Location} & \textbf{What happens there} \\ \midrule
+Student Linux host & OpenCode TUI, project files, local tools, Git diffs, tests, and session records. \\[2pt]
+Private inference host & vLLM applies model weights to the request context and returns text/tool-call proposals. \\[2pt]
+Optional solver host & An explicit local or approved remote command runs the physics code. This path needs its own account and limits. \\[2pt]
+Other services & Search, embedding, MCP, plugins, or file synchronization can create additional destinations. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A structured call separates intent from execution}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Model proposal: invoke a calculation tool with named SI inputs; the harness validates the request shape and permission.
+\item Execution result: process exit status, parsed JSON, raw-output path, and the case identifier.
+\item Application validation: check units, finiteness, completeness, and correspondence to the approved input.
+\item Only the validated result can enter the final report. A string that looks like a shell command is not proof it was executed.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Inspect a concrete tool contract}
+\begin{lstlisting}
+INPUT:  power_W=100000, mass_flow_kg_s=2,
+        cp_J_kg_K=1000, inlet_K=300
+OUTPUT: {"status":"ok", "delta_T_K":50.0,
+         "outlet_K":350.0, "units":{"outlet_K":"K"}}
+FAILURE: nonzero exit + explicit error; no new success file
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The reference equation is $T_{\mathrm{out}} = T_{\mathrm{in}} + \frac{Q}{\dot{m} c_p}$ (in script: \texttt{inlet\_K + power\_W / (mass\_flow\_kg\_s * cp\_J\_kg\_K)}).
+\item The model can propose the run and explain it; Python performs this calculation.
+\item Check whether changing mass flow causes a fresh execution with a distinct result file.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Context files have different jobs}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-4.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.75\linewidth-12.0pt\relax}}
+\toprule
+\textbf{Artifact} & \textbf{What belongs in it} \\ \midrule
+Task request & Current objective, scope, desired artifacts, and acceptance conditions. \\[2pt]
+AGENTS.md & Persistent project conventions: commands, units, file ownership, and required checks. \\[2pt]
+Skill instructions & A reusable procedure with triggers, inputs, outputs, references, and stop conditions. \\[2pt]
+Run manifest & Actual inputs, versions, hashes, process status, and output locations. \\[2pt]
+Documentation & How another engineer configures, runs, checks, and interprets the workflow. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Reasoning, retrieval, and tools solve different problems}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Reasoning helps organize a difficult task, but an extended explanation can still rest on a false premise.
+\item Retrieval supplies selected external text. Verify its source, revision, and applicability before treating it as evidence.
+\item Tools provide observations or execute operations. Their contracts and implementation can also contain defects.
+\item Combine all three with independent checks: a correct source, a validated input, an actual run, and a reviewed interpretation.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Configure the private endpoint explicitly}
+\begin{lstlisting}
+PHANES_BASE_URL='https://inference.example.edu:41883/v1'
+PHANES_API_KEY='replace-with-your-issued-key'
+PHANES_MODEL='qwen3.8-27b-nvfp4'
+PHANES_CONTEXT=262144
+PHANES_OUTPUT=8192
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The trusted shared/.env file is explicitly sourced by start-opencode.sh.
+\item The wrapper generates a provider entry whose model key matches PHANES\_MODEL.
+\item The credentials are placeholders; use the issued endpoint and keep the real key out of submissions.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: occonfig, user. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Use the compatible API adapter}
+\begin{lstlisting}
+"provider": {"phanes": {
+  "npm": "@ai-sdk/openai-compatible",
+  "options": {"baseURL": "{env:PHANES_BASE_URL}",
+              "apiKey": "{env:PHANES_API_KEY}"},
+  "models": {"qwen3.8-27b-nvfp4": {}}
+}}
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item This is a configuration excerpt. Use shared/start-opencode.sh for the complete generated file.
+\item The URL includes /v1; baseURL is case-sensitive, and the model identifier must match the served alias.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ocprovider. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Run the first controlled TUI session}
+\begin{lstlisting}
+cd shared
+cp .env.example .env       # edit the issued settings
+chmod 600 .env
+./start-opencode.sh --check
+./start-opencode.sh
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item In /models, confirm the phanes provider and expected alias.
+\item Ask for a plan and a local calculator run; inspect the proposed command before approving it.
+\item Read the saved JSON, compare with the analytical equation, and inspect the final explanation.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Diagnose failures by layer}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-4.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.75\linewidth-12.0pt\relax}}
+\toprule
+\textbf{Observation} & \textbf{First evidence to inspect} \\ \midrule
+TLS error & Hostname, certificate chain, clock and institutional CA configuration. \\[2pt]
+HTTP 401 & Issued key, authorization header and server-side account policy. \\[2pt]
+Unknown model & /v1/models versus the generated provider's model-map key. \\[2pt]
+No tool call & Harness trace, model capabilities, server parser and chat template. \\[2pt]
+Wrong numerical answer & Actual command arguments, tool version, units and validated output. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{What the user contributes during development}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item At the start: a bounded question, source data, units, constraints, and a definition of done.
+\item At a decision: resolve a consequential ambiguity or authorize a specific operation with visible effects.
+\item During execution: inspect progress artifacts and failures; correct the objective if the work drifts.
+\item At completion: review the diff, tests, provenance, limitations, and final result before accepting it.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Improve this engineering request}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Weak request: "Make a reactor model and tell me if it works."
+\item Rewrite it with a public teaching geometry, specified outputs, a compute budget, and explicit validation stages.
+\item Require the agent to list unresolved physics assumptions before implementing them.
+\item Require both a successful artifact and a deliberate failure demonstration.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{One worked approach: improving the engineering request}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Rewritten request: implement the provided public pin-cell specification; export the OpenMC XML and a geometry plot; validate both against the specification; run only the approved smoke budget.
+\item The agent lists unresolved physics assumptions before implementing them and retains the diagnostics.
+\item It demonstrates one controlled failure with an invalid input and confirms that no success artifact is written.
+\item It requests approval before any convergence study; no physical conclusion is claimed from a smoke run.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Lab deliverable: explain the whole evidence chain}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Capture the raw API response, local tool invocation, saved calculation output, and final TUI explanation.
+\item Annotate which component supplied each capability: model, harness, tool, validator, or user.
+\item Include one invalid-input case and one endpoint-configuration diagnosis.
+\item Submit a short explanation of what crossed the inference boundary and what evidence supports the reported value.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Sample submission: the evidence-chain deliverable}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Four captured artifacts: the raw API response, the exact local tool command, the saved JSON output, and the final TUI explanation.
+\item Annotation table: the model supplied the plan and wording; the harness enforced permissions and dispatch; the tool performed the calculation; the validator checked units and finiteness; the user authorized the endpoint and the run.
+\item Invalid-input case: a negative mass flow produced a nonzero exit and an explicit error, with no new success file.
+\item Endpoint diagnosis: an HTTP 401 was traced to the issued key and authorization header, not to the model settings.
+\item Boundary statement: the request context crossed to the private endpoint; the reported 350.0 K is supported by the saved JSON and the analytical equation, not by prose.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Before the next module, answer four questions}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item What makes this workflow agentic rather than a fixed script?
+\item Where did the numerical work actually run, and how can you prove it?
+\item Which files or tool outputs became model context?
+\item Which changes to data, recipients, tools, or endpoints require revisiting the information boundary?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{A complete answer: the four pre-module questions}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Agentic: the model proposes the next action from observed tool results while the harness enforces policy; a fixed script has prewritten control flow.
+\item The numerical work ran in the local Python process; the proof is the exit status, the saved JSON with its file path, and the run manifest. The endpoint returned text only.
+\item Model context included the task text, project context files, and the tool's structured output inserted by the harness.
+\item Revisit the information boundary when the data class, the recipient service, a network-capable tool, or the endpoint or provider changes.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\item \textbf{occonfig}: \href{https://opencode.ai/docs/config/}{opencode.ai/docs/config}
+\item \textbf{user}: User-supplied vllm(1).zip: vllm/vllm-qwen38-nvfp4.sh, README.md, chat\_template.jinja; reviewed 2026-09-05.
+\item \textbf{ocprovider}: \href{https://opencode.ai/docs/providers/}{opencode.ai/docs/providers}
+\item \textbf{oak}: \href{https://github.com/jcarlosrodicio/opencode-agent-orchestration-kit}{github.com/jcarlosrodicio/opencode-agent-orchestration-kit}
+\end{itemize}\end{frame}
+\end{document}

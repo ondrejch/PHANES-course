@@ -1,0 +1,15 @@
+.env
+.env.server
+.generated/
+__pycache__/
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+
+*zip
+*pdf
+*ppt*

@@ -1,0 +1,417 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{04}
+\title{An OpenMC development workflow}
+\subtitle{A worked public teaching model, from pin cell to a finite core}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{The engineering task and its declared limits}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Build an educational UO2/water model in three stages: a reflective pin cell, a reflective 17$\times$17 assembly, and a finite 3$\times$3-assembly core.
+\item Compare the finite-core result for 20 cm versus 30 cm of water reflector while holding the fuel model fixed.
+\item Deliver geometry plots, validated inputs, convergence evidence, keff with uncertainty, and a relative fission map.
+\item This is a deliberately simplified teaching model: no depletion, thermal feedback, boron, control rods, vessel, or licensed design claim.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{OpenMC supplies stochastic transport evidence}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item OpenMC tracks sampled neutron histories through a material/geometry model using nuclear data.
+\item An eigenvalue run iterates the fission source and estimates multiplication; the output includes sampling uncertainty.
+\item Python builds the model and reads results. The transport executable performs the simulation.
+\item An agent can create and inspect these artifacts, but cannot replace a missing statepoint with an invented keff.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omintro. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Assign the OpenMC work to the development roles}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.24\linewidth-3.84pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.76\linewidth-12.16pt\relax}}
+\toprule
+\textbf{Role} & \textbf{Concrete task in this example} \\ \midrule
+Planner & Freeze the dimensions, materials, boundaries, outputs, and run budget; identify stages and review gates. \\[2pt]
+Researcher & Verify material, lattice, source and statepoint APIs against the selected OpenMC version. \\[2pt]
+Implementer & Create model.py, input cases and extraction code without changing the accepted physics spec. \\[2pt]
+Verifier / tester & Inspect geometry and XML, test invariants, reproduce a failure, review convergence and statistics. \\[2pt]
+Docs / user & Document exact commands and limitations; user accepts geometry and authorizes higher-cost runs. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Start the TUI with an explicit OpenMC request}
+\begin{lstlisting}
+Implement the supplied public teaching OpenMC specification.
+First produce a plan and list unresolved physical assumptions.
+Keep nuclear data read-only and do not install packages.
+Build pin, assembly and core inputs, plus geometry plots.
+Do not start transport until I accept the geometry and budget.
+Never report a keff that is not read from the named statepoint.
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The user supplies the approved environment and nuclear-data path.
+\item A later approval can authorize a class of bounded smoke runs; each routine command need not be renegotiated.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Freeze the geometric specification}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Quantity} & \textbf{Teaching value and interpretation} \\ \midrule
+Pin pitch & 1.26 cm; square lattice. \\[2pt]
+Radii & Fuel 0.4096 cm; gap outer 0.4180 cm; clad outer 0.4750 cm. \\[2pt]
+Assembly & 17$\times$17 sites; 25 idealized water sites at index pairs from \{2,5,8,11,14\}. \\[2pt]
+Finite core & 3$\times$3 identical assemblies; 200 cm active height. \\[2pt]
+Reflector & 20 cm water outside every face, then 30 cm for the comparison. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Make the material model explicit}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-3.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.8\linewidth-12.8pt\relax}}
+\toprule
+\textbf{Material} & \textbf{Composition, density and temperature} \\ \midrule
+Fuel & UO2; uranium enrichment argument 3 wt\% U-235; O:U atom ratio 2:1; 10.297 g/cm$^3$; 900 K. \\[2pt]
+Gap & Helium; 0.0016 g/cm$^3$; 600 K. \\[2pt]
+Cladding & Elemental zirconium surrogate; 6.55 g/cm$^3$; 600 K. \\[2pt]
+Water & H:O atom ratio 2:1; 0.70 g/cm$^3$; 600 K; H-in-water thermal scattering. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ommat. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Construct the fuel and moderator materials}
+\begin{lstlisting}
+fuel = openmc.Material(name="fuel", temperature=900.0)
+fuel.add_element("U", 1.0, enrichment=3.0)
+fuel.add_element("O", 2.0)
+fuel.set_density("g/cm3", 10.297)
+water = openmc.Material(name="water", temperature=600.0)
+water.add_element("H", 2.0)
+water.add_element("O", 1.0)
+water.set_density("g/cm3", 0.70)
+water.add_s_alpha_beta("c_H_in_H2O")
+\end{lstlisting}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ommat. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Use signed regions for the pin}
+\begin{lstlisting}
+rf = openmc.ZCylinder(r=0.4096)
+rg = openmc.ZCylinder(r=0.4180)
+rc = openmc.ZCylinder(r=0.4750)
+pin = openmc.Universe(cells=[
+    openmc.Cell(fill=fuel, region=-rf),
+    openmc.Cell(fill=helium, region=+rf & -rg),
+    openmc.Cell(fill=zirconium, region=+rg & -rc),
+    openmc.Cell(fill=water, region=+rc)])
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The enclosing root or lattice clips this infinite pin universe.
+\item Check that each point belongs to exactly one intended region, away from the ideal mathematical surfaces.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omgeom. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Check geometry before running any particles}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Verify 0 < 0.4096 < 0.4180 < 0.4750 < 1.26/2 cm.
+\item The clad-to-clad clearance between neighboring pins is $1.26 - 2(0.4750) = 0.3100$~cm.
+\item Assembly width is 17$\times$1.26 = 21.42 cm; finite fuel-region width is 3$\times$21.42 = 64.26 cm.
+\item With a 20 cm reflector, outer width is 104.26 cm and outer height is 240 cm.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Build the assembly lattice deliberately}
+\begin{lstlisting}
+lat = openmc.RectLattice(name="assembly")
+lat.pitch = (1.26, 1.26)
+lat.lower_left = (-10.71, -10.71)
+u = np.full((17, 17), pin, dtype=object)
+for row in (2, 5, 8, 11, 14):
+    for col in (2, 5, 8, 11, 14):
+        u[row, col] = water_universe
+lat.universes = u
+lat.outer = water_universe
+\end{lstlisting}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omlattice. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{A finite core changes the boundary problem}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Fill a 3$\times$3 lattice with the assembly universe and clip it to the 64.26-cm-wide, 200-cm-high fuel-region box.
+\item Fill the remainder of the enclosing larger box with water; place vacuum boundaries on the outer box.
+\item The pin and assembly stages use reflective boundaries, so their multiplication estimates represent an infinite repetition of the teaching cell.
+\item The core stage permits leakage. Do not compare reflective and finite results as if they were the same physical problem.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omgeom. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Inspect each stage with a different question}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-3.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.8\linewidth-12.8pt\relax}}
+\toprule
+\textbf{Stage} & \textbf{Evidence before promotion} \\ \midrule
+Pin & Radial order, fills, pitch, periodic/reflective interpretation and material composition. \\[2pt]
+Assembly & 17$\times$17 site count, 25 water sites, intended orientation, outer fill and reflective domain. \\[2pt]
+Finite core & Nine assemblies, axial clipping, reflector thickness, vacuum boundaries and x-z plot. \\[2pt]
+All stages & No uncovered/overlapping regions in sampled checks; no unexpected material substitutions. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omtrouble. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Separate building, plotting, and transport}
+\begin{lstlisting}
+source .env.openmc            # trusted solver environment
+python3 model.py --mode pin --out runs/pin-smoke
+cd runs/pin-smoke
+openmc --plot
+openmc --geometry-debug --threads 4
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item model.py writes into a new run directory and refuses to replace an existing one.
+\item The instructor provisions the OpenMC executable and OPENMC\_CROSS\_SECTIONS.
+\item Transport and geometry-debug execution require the approved compute budget.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omtrouble. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Set source and batch controls explicitly}
+\begin{lstlisting}
+settings.run_mode = "eigenvalue"
+settings.particles = 1000
+settings.batches = 40
+settings.inactive = 10
+settings.seed = 3407
+settings.source = openmc.IndependentSource(
+    space=openmc.stats.Box(lower, upper),
+    constraints={"fissionable": True})
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item These values are a smoke budget for finding setup defects, not an accepted convergence configuration.
+\item The initial source samples the fuel-region box and rejects nonfissionable sites.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omsource, omsettings. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Plan convergence runs instead of assuming them}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.24\linewidth-3.84pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.76\linewidth-12.16pt\relax}}
+\toprule
+\textbf{Run class} & \textbf{Example budget and purpose} \\ \midrule
+Smoke & 1,000 particles $\times$ 40 batches, 10 inactive: inputs/data/geometry and process completion. \\[2pt]
+Pilot & 5,000 $\times$ 150 batches, 50 inactive: inspect source behavior and estimate runtime/uncertainty. \\[2pt]
+Higher statistics & 20,000 $\times$ 300 batches, 100 inactive: candidate comparison run, subject to convergence review. \\[2pt]
+Independent checks & Repeat with different seeds and longer inactive histories if source behavior or comparison warrants it. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omsettings. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Source convergence precedes tally acceptance}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A stable-looking keff trace alone can miss an inadequately converged spatial source.
+\item Inspect source diagnostics, including an entropy mesh covering the fission region, and sensitivity to inactive generations.
+\item Correlated histories/batches affect uncertainty estimates; investigate suspiciously small reported errors.
+\item Only compare reflector cases after both runs meet the predeclared convergence and statistical criteria.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omsettings. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Shannon entropy diagnoses fission source convergence}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Shannon entropy characterizes the spatial distribution of fission sites across batches:
+\[H_{\mathrm{src}} = -\sum_{s=1}^{S} P_s \log_2 P_s\]
+where $P_s$ is the fraction of fission source sites in spatial mesh cell $s$.
+\item The eigenvalue $k_{\mathrm{eff}}$ can appear stable early even while the spatial fission distribution is still settling across the geometry.
+\item Inactive batches must run until $H_{\mathrm{src}}$ stationarily fluctuates around its asymptotic mean; only active batches accumulate tallies.
+\item Tallying before entropy converges introduces spatial bias and invalidates standard-deviation estimates.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omsettings. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Request a spatial fission tally}
+\begin{lstlisting}
+mesh = openmc.RegularMesh()
+mesh.dimension = (51, 51, 1)   # finite teaching core
+mesh.lower_left = (-32.13, -32.13, -100.0)
+mesh.upper_right = (32.13, 32.13, 100.0)
+t = openmc.Tally(name="fission-map")
+t.filters = [openmc.MeshFilter(mesh)]
+t.scores = ["fission"]
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The mesh resolves pin-pitch columns across the active region and integrates over height.
+\item A mesh bin containing a water site should not be interpreted as a fueled pin.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omtally. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Normalization is part of the result definition}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The fission tally estimates reactions per source particle under the eigenvalue normalization.
+\item For a relative map, divide a bin's mean by the sum of the mapped fission means and document the mapped region.
+\item A power map in watts needs a defensible energy/deposition normalization and declared system power; no such conversion is claimed here.
+\item Preserve per-bin standard deviations. Ratio uncertainty needs covariance treatment or a stated approximation.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omtally. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Read the exact statepoint into a result record}
+\begin{lstlisting}
+with openmc.StatePoint(path) as sp:
+    k_mean = float(sp.keff.nominal_value)
+    k_std = float(sp.keff.std_dev)
+    tally = sp.get_tally(name="fission-map")
+    means = tally.mean.ravel()
+    stds = tally.std_dev.ravel()
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Require the expected statepoint filename in the manifest; do not glob for an arbitrary newest file.
+\item Record statepoint hash, input/XML hashes, solver version, exit status and convergence-review status.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: omstate. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Bind each run to its actual inputs}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Record} & \textbf{Example field or artifact} \\ \midrule
+Input identity & case JSON, model.py hash, exported XML hashes and nuclear-data release identifier. \\[2pt]
+Execution & OpenMC version, seed, batch controls, thread/MPI setup, command, return code and log. \\[2pt]
+Result & Named statepoint hash, keff mean/std, raw tally arrays and diagnostic plots. \\[2pt]
+Acceptance & Geometry review, convergence assessment, precision criterion, reviewer and limitations. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Run the reflector comparison as two cases}
+\begin{lstlisting}
+python3 model.py --mode core --reflector-cm 20 \
+  --particles 20000 --batches 300 --inactive 100 \
+  --seed 3407 --out runs/core-r20
+python3 model.py --mode core --reflector-cm 30 \
+  --particles 20000 --batches 300 --inactive 100 \
+  --seed 9181 --out runs/core-r30
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Hold composition, temperatures, geometry inside the fuel region and tally definition fixed.
+\item Run only after geometry/budget review; different seeds support the independent-run uncertainty exercise.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Extend the comparison into a bounded sweep}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Declare the parameter, unit, value set and grid before any run; a sweep is one declared experiment, not repeated single runs.
+\item Give each run its own inputs, manifest and result record so the whole grid reproduces from the declaration alone.
+\item Fix the statistical target per run first, because comparing under-converged values is not evidence.
+\item A partial sweep is reported as partial: name the covered cells, the budget spent, and the remaining grid.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Work the comparison before interpreting it}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Illustrative values only: case A has $k = 1.00200 \pm 0.00020$; case B has $k = 1.00320 \pm 0.00025$.
+\item For independent estimates, $\Delta k = 0.00120$ and $\sigma(\Delta k) = \sqrt{0.00020^2 + 0.00025^2} \approx 0.000320$.
+\item Thus $\Delta k \times 10^5 = 120 \pm 32$~pcm in $k$-units; the difference is about $3.75\sigma$.
+\item Reactivity $\rho = (k-1)/k$; $\Delta \rho = \Delta k / (k_A k_B) \approx 119 \pm 32$~pcm, showing why reactivity and $\Delta k$ differ.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Choose the next run from the evidence}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Suppose the target sampling uncertainty for $\Delta k$ is 20 pcm and the current independent-run estimate is 32 pcm.
+\item Under the usual inverse-square-root scaling, active histories scale as $(32/20)^2 = 2.56$.
+\item Check source convergence and systematic changes before simply increasing histories.
+\item Ask the user to authorize the revised budget with the expected cost and precision benefit.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Predeclare checks an agent may not waive}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.21\linewidth-3.36pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.79\linewidth-12.64pt\relax}}
+\toprule
+\textbf{Check} & \textbf{Failure and required response} \\ \midrule
+Geometry & Overlap, missing region or lost particle: retain diagnostics; fix/review geometry before comparison. \\[2pt]
+Data & Missing nuclide or thermal table: report exact requirement; do not silently swap library or material. \\[2pt]
+Run identity & Statepoint/input mismatch: reject reuse and rerun the affected case. \\[2pt]
+Convergence & Unresolved source behavior: withhold the physical comparison and propose a study. \\[2pt]
+Precision & Uncertainty above target: label inconclusive or request the justified additional budget. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Worked failure: the agent removes thermal scattering}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Observed failure: the configured library cannot supply the requested H-in-water table at the needed conditions.
+\item Bad repair: delete the thermal-scattering assignment so transport starts.
+\item Verifier finding: this changes the moderator model and invalidates the agreed comparison.
+\item Correct next step: identify the missing data/version requirement and ask the operator to supply an approved compatible dataset, or explicitly revise the model and rerun both cases.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ommat. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{What the user reviews at each OpenMC gate}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Model gate: dimensions, composition, boundary conditions, simplifications, plots and geometry checks.
+\item Run gate: data identity, source controls, planned histories, resource limits and stop conditions.
+\item Comparison gate: consistent inputs, accepted convergence, uncertainty, relative tally interpretation and retained diagnostics.
+\item Handoff gate: reproducible commands, observed versus illustrative results, unresolved limits and a complete provenance package.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Lab: complete the OpenMC evidence package}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Use the supplied generator and spec tests to build pin, assembly and finite-core cases in new directories.
+\item Inspect plots and geometry diagnostics; document one deliberately introduced geometry or data failure.
+\item Execute the approved reflector comparison and replace the illustrative statistics with values extracted from real statepoints.
+\item Submit XML, manifests, logs, statepoint references, convergence review, comparison table and a report stating all simplifications.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Sample submission: the OpenMC evidence package}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Directory layout: pin, assembly, and finite-core cases, each with generated XML, run manifest, logs, and extracted statistics; every statistic shown is taken from your own statepoints, and the illustrative slide values are placeholders.
+\item Documented failure: one deliberately introduced geometry or data failure (for example, a dimension that makes two surfaces coincide) with its diagnostic message; the corrected case is rerun and the two manifests are diffed.
+\item Comparison table: the reflector and bare-core rows are filled from the extracted k and its standard deviation; the convergence review cites the batch statistics and the relative tally interpretation.
+\item Report: all simplifications are stated (public teaching model, no feedback, no depletion), and the handoff commands reproduce every artifact.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Extend the model only through reviewed changes}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A real assembly may need guide-tube walls, axial regions, burnable absorbers and a documented lattice layout.
+\item A reactor study may need heterogeneous loading, depletion, thermal-hydraulic feedback and additional structures.
+\item Each extension changes verification, data requirements, state identity and validation evidence.
+\item Carry the same planner-to-verifier loop forward; model fidelity and acceptance scope must advance together.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Exit ticket: verifying a transport calculation}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Why does a stable $k_{\mathrm{eff}}$ trace across early batches fail to prove spatial convergence?
+\item How does an engineering agent prove that a reported $k_{\mathrm{eff}}$ originates from transport rather than recall?
+\item Why cannot reflective pin-cell and finite-core multiplication values be directly compared?
+\item What must happen when a transport run fails because an $S(\alpha,\beta)$ table is unavailable?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{A complete answer: transport verification}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Spatial lag: the fission source distribution converges more slowly than the scalar eigenvalue; Shannon entropy over a fission mesh must plateau before active batches start.
+\item Statepoint provenance: verify the run manifest, execution return code, input and XML hashes, and read $k_{\mathrm{eff}}$ directly from the named binary statepoint.
+\item Problem domain: reflective pin cells model an infinite lattice without leakage; finite cores include physical leakage and vacuum boundaries.
+\item Consequential exception: report the missing library table to the user/operator; do not silently delete thermal scattering or alter moderator physics to force completion.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\item \textbf{omintro}: \href{https://docs.openmc.org/en/stable/usersguide/beginners.html}{docs.openmc.org/usersguide/beginners.html}
+\item \textbf{ommat}: \href{https://docs.openmc.org/en/stable/usersguide/materials.html}{docs.openmc.org/usersguide/materials.html}
+\item \textbf{omgeom}: \href{https://docs.openmc.org/en/stable/usersguide/geometry.html}{docs.openmc.org/usersguide/geometry.html}
+\item \textbf{omlattice}: \href{https://docs.openmc.org/en/stable/pythonapi/generated/openmc.RectLattice.html}{docs.openmc.org/pythonapi/generated/openmc.RectLattice.html}
+\item \textbf{omtrouble}: \href{https://docs.openmc.org/en/stable/usersguide/troubleshoot.html}{docs.openmc.org/usersguide/troubleshoot.html}
+\end{itemize}\end{frame}
+\begin{frame}[t]{References 2}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{omsource}: \href{https://docs.openmc.org/en/stable/pythonapi/generated/openmc.IndependentSource.html}{docs.openmc.org/pythonapi/generated/openmc.IndependentSource.html}
+\item \textbf{omsettings}: \href{https://docs.openmc.org/en/stable/usersguide/settings.html}{docs.openmc.org/usersguide/settings.html}
+\item \textbf{omtally}: \href{https://docs.openmc.org/en/stable/usersguide/tallies.html}{docs.openmc.org/usersguide/tallies.html}
+\item \textbf{omstate}: \href{https://docs.openmc.org/en/stable/pythonapi/generated/openmc.StatePoint.html}{docs.openmc.org/pythonapi/generated/openmc.StatePoint.html}
+\end{itemize}\end{frame}
+\end{document}

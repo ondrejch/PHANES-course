@@ -1,0 +1,253 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{07}
+\title{RAG for regulatory review}
+\subtitle{Retrieve traceable public evidence and bound the interpretation}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{Retrieval supports the reviewer's judgment}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Find relevant public requirements and guidance.
+\item Map a supplied statement to exact source passages.
+\item Distinguish retrieved evidence from interpretation.
+\item Flag missing evidence and uncertain applicability for review.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{The regulatory review pipeline}
+\vspace{-1mm}
+\begin{center}
+\begin{tikzpicture}[
+  node distance=4mm and 8mm,
+  every node/.style={draw=UTorange,rounded corners,align=center,font=\scriptsize,minimum height=6mm,minimum width=38mm},
+  >={Stealth}
+]
+\node (corpus) {Public corpus:\\10 CFR, Reg Guides, SRP};
+\node[below=of corpus] (manifest) {Corpus manifest:\\URL, date, SHA-256};
+\node[below=of manifest] (chunk) {Clause-aware\\chunking};
+
+\node[right=of corpus] (index) {Hybrid index:\\lexical + embedding};
+\node[below=16mm of index] (app) {Application statement\\to evaluate};
+
+\node[right=of index] (retrieval) {Candidate retrieval\\\& reranking};
+\node[below=of retrieval] (claim) {Claim-to-evidence\\record};
+\node[below=of claim] (reviewer) {Human reviewer:\\judgment \& gaps};
+
+\draw[->] (corpus) -- (manifest);
+\draw[->] (manifest) -- (chunk);
+\draw[->] (chunk.east) to[bend right=15] (index.south west);
+\draw[->] (index) -- (retrieval);
+\draw[->] (app.north) -- (retrieval.south west);
+\draw[->] (retrieval) -- (claim);
+\draw[->] (claim) -- (reviewer);
+\end{tikzpicture}
+\end{center}
+\vspace{-1mm}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{1.5mm}
+\item Ingestion is offline and provenance-tracked: every chunk links to its manifest hash and exact text span.
+\item Retrieval produces candidate evidence; the human reviewer retains authority over regulatory findings.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Preserve the kind of authority}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.27\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.73\linewidth-11.68pt\relax}}
+\toprule
+\textbf{Document type} & \textbf{How to treat it} \\ \midrule
+Regulation & Read the applicable rule and scope \\[2pt]
+Regulatory guide & Identify the described acceptable approach \\[2pt]
+Standard review plan & Understand staff review guidance \\[2pt]
+Application statement & Treat as a claim needing evidence \\[2pt]
+Technical report & Assess relevance, method and limitations \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: rg, srp. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Create a corpus manifest before indexing}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Record source URL, title, document identifier, and revision/date.
+\item Retain the downloaded artifact and its hash.
+\item Record section and PDF page separately when they differ.
+\item Keep public status and extraction limitations visible.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Chunk by meaning and citation boundaries}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Keep a requirement with its qualifiers and definitions.
+\item Preserve section headings and document metadata.
+\item Handle tables, footnotes, and OCR errors explicitly.
+\item Avoid splitting "shall" statements from their conditions.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Compare retrieval methods on the same queries}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-6.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.35\linewidth-8.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4\linewidth-9.6pt\relax}}
+\toprule
+\textbf{Method} & \textbf{Useful behavior} & \textbf{Failure to watch} \\ \midrule
+Lexical search & Exact terms and identifiers & Missed paraphrases \\[2pt]
+Embedding search & Semantic similarity & Similar but inapplicable text \\[2pt]
+Hybrid retrieval & Combines candidate signals & Poor ranking/calibration \\[2pt]
+Metadata filtering & Restricts revision or scope & Incorrect metadata exclusion \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A high-scoring passage is the wrong revision}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Two passages use nearly identical language.
+\item The top result belongs to a superseded document.
+\item Which metadata should constrain retrieval?
+\item How should the report expose the selected revision?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{One worked approach: the superseded passage}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Constraining metadata: document identity, revision or date, and applicability to the reviewed case; the query is filtered so both revisions can appear and be compared.
+\item Selection rule: the current applicable revision is used for the answer, and the superseded passage is retained in the record, not silently dropped.
+\item Report exposure: the citation names the selected revision and date, and a note marks the other passage as superseded with the same document identity.
+\item Caution: the latest revision is not always the correct one for the reviewed application; applicability decides, and the choice is stated in the claim-to-evidence record.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Build a claim-to-evidence record}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Application statement and the question under review.
+\item Source identifier, revision, section, and exact supporting span.
+\item Interpretation with assumptions stated separately.
+\item Status: supported, contradicted, or insufficient evidence.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Make an unresolved finding explicit}
+\begin{lstlisting}
+{
+  "statement_id": "DEMO-03",
+  "status": "insufficient_evidence",
+  "evidence_ids": [],
+  "interpretation": "The searched corpus does not resolve this claim.",
+  "next_action": "Human reviewer identifies the missing source."
+}
+\end{lstlisting}
+\end{frame}
+\begin{frame}[t,fragile]{Keep an evidence span and interpretation separate}
+\begin{lstlisting}
+{"claim_id":"DEMO-12", "corpus_version":"public-v1",
+ "source_id":"DOC-04", "revision":"retained-edition",
+ "section":"reviewed-section", "page":12,
+ "span_start":1042, "span_end":1189,
+ "evidence_text":"[verbatim text retained in corpus]",
+ "interpretation":"[reviewer-visible inference]",
+ "status":"needs_review"}
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Schema example only: these placeholders are not a real regulatory citation.
+\item Validate locators against the retained source before accepting an answer.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Check citations independently of fluency}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Does the cited document exist in the retained corpus?
+\item Does the locator reach the quoted or paraphrased passage?
+\item Does the passage support the specific claim?
+\item Are qualifiers, revision, and applicability preserved?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Calculate retrieval precision and recall}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A labeled query has four relevant passages.
+\item The system retrieves five passages; three are relevant.
+\item Calculate precision and recall for this retrieval set.
+\item Which missing passage would matter most to the reviewer?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Worked solution: precision and recall}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Precision: $3/5 = 0.60$; three of the five retrieved passages are relevant.
+\item Recall: $3/4 = 0.75$; three of the four relevant passages were retrieved.
+\item The missing passage is the one whose absence changes the review outcome, for example a key exception or a scope qualifier, not merely the highest-ranked absent item.
+\item The counts are invented for the exercise; small labeled sets need reviewer agreement before the metrics support a decision.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Compare two retrieval configurations}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Illustrative labeled set: 10 queries with 40 relevant spans in total.
+\item System A retrieves 50 spans, 30 relevant: micro precision 0.60 and micro recall 0.75.
+\item System B retrieves 80 spans, 36 relevant: micro precision 0.45 and micro recall 0.90.
+\item Choose based on review cost and missed-requirement consequence; also inspect per-query failures and applicability.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Evaluate retrieval and answers separately}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.27\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.73\linewidth-11.68pt\relax}}
+\toprule
+\textbf{Stage} & \textbf{Metric or check} \\ \midrule
+Retrieval & Recall@k, precision@k, relevant revision \\[2pt]
+Citation & Valid locator and supporting span \\[2pt]
+Answer & Unsupported claims and missed qualifications \\[2pt]
+Review finding & Missed issue and false-positive rate \\[2pt]
+Boundary & Only approved corpus and endpoint paths \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Use adversarial but public test cases}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A query uses a synonym instead of the exact regulatory term.
+\item A scanned table contains an extraction error.
+\item A passage includes a relevant exception in the next paragraph.
+\item A document contains instructions unrelated to the review task.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Lab: build a small review assistant}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Curate a public corpus and retain its manifest.
+\item Implement a CPU lexical baseline; add approved embeddings optionally.
+\item Use OpenCode to build cited statement-to-evidence mapping.
+\item Evaluate retrieval, citation correctness, and unsupported findings.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Sample submission: the review assistant}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Corpus and manifest: the public documents used, the extraction method, the corpus version, and the instructor-chosen statement labels.
+\item Baseline and evaluation: the CPU lexical retriever with labeled queries, and per-query precision/recall with the ambiguous cases documented.
+\item Statement-to-evidence mapping: each claim carries a source identifier, revision, section, and the supporting span with a supported or insufficient status.
+\item Findings: the unsupported claims are listed explicitly, and the citation checks separate valid locators from entailment.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Exit ticket: when should the assistant stop?}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item No supporting passage in the searched corpus.
+\item Conflicting or unclear document applicability.
+\item Unreliable extraction or missing qualifiers.
+\item A conclusion that requires a regulator or qualified reviewer.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{A complete answer: when to stop}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item No supporting passage: status is insufficient evidence, and the next action is to have a human reviewer identify the missing source.
+\item Conflicting applicability: status is needs review, and the record names both revisions and the question that distinguishes them.
+\item Unreliable extraction: status is unverified, and the claim is held until a trusted extraction or the original page confirms it.
+\item Regulator-level conclusion: the assistant stops at a status record and a next action for the qualified reviewer; it does not render the compliance verdict.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\item \textbf{rg}: \href{https://www.nrc.gov/reading-rm/doc-collections/reg-guides/index}{nrc.gov/reading-rm/doc-collections/reg-guides/index}
+\item \textbf{srp}: \href{https://www.nrc.gov/reading-rm/doc-collections/nuregs/staff/sr0800/index}{nrc.gov/reading-rm/doc-collections/nuregs/staff/sr0800/index}
+\end{itemize}\end{frame}
+\end{document}

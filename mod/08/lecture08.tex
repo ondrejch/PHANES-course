@@ -1,0 +1,207 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{08}
+\title{Agentic engineering capstone}
+\subtitle{Build, evaluate, and defend a bounded nuclear workflow}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{Choose a workflow with observable success}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A calculation checker with independently known results.
+\item A public-document review or requirements-traceability assistant.
+\item An educational simulator with explicit physical limits.
+\item A bounded analysis workflow with reproducible tool outputs.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Write a question the project can answer}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Identify the user, task, inputs, and required output.
+\item Define the deterministic work and model-mediated work.
+\item State exclusions and human decisions.
+\item Specify a measurable baseline before building the agent.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Reuse the course's engineering artifacts}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.64\linewidth-10.24pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.36\linewidth-5.76pt\relax}}
+\toprule
+\textbf{Artifact} & \textbf{Introduced in} \\ \midrule
+Information boundary statement & Module 02 \\[2pt]
+Skill input/output and failure contract & Module 03 \\[2pt]
+Provenance record & Module 04 \\[2pt]
+Evidence dossier & Module 05 \\[2pt]
+Serving and workload report & Module 06 \\[2pt]
+Corpus and citation record, if needed & Module 07 \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Make milestones evidence-based}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.15\linewidth-3.6pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.3\linewidth-7.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.55\linewidth-13.2pt\relax}}
+\toprule
+\textbf{Weeks} & \textbf{Milestone} & \textbf{Evidence} \\ \midrule
+1--2 & Proposal & Question, boundary, baseline, test plan \\[2pt]
+3--6 & Build & Tools, skills and end-to-end runs \\[2pt]
+7--8 & Harden & Failure tests and draft dossier \\[2pt]
+9--10 & Peer review & Reproducible findings and responses \\[2pt]
+11--12 & Handoff & Final report, demo and clean rerun \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Review a proposal before coding}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Proposal: "Build an AI assistant for reactor design."
+\item Narrow it to one input, one output, and one bounded workflow.
+\item Name an independent reference and a failure test.
+\item Identify the data boundary and the responsible reviewer.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{One worked approach: narrowing the proposal}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item One input: the public educational pin-cell geometry, specified by its XML and material data.
+\item One output: a validated heat-balance calculation with stored result and provenance.
+\item One bounded workflow: the agent runs the documented educational calculation package and checks the outcome against the analytical reference.
+\item Failure test: an invalid input (negative flow) produces a nonzero exit and no success file.
+\item Boundary and reviewer: all data is public or synthetic; the data inventory lists the inference endpoint as the only external destination; the instructor is the responsible reviewer.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Freeze an evaluation set before tuning}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Separate development examples from final evaluation tasks.
+\item Include normal, boundary, invalid, and ambiguous cases.
+\item Record metrics, acceptance criteria, and review rules.
+\item Version the set when scope changes.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Run design review as an engineering exercise}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A peer team attempts reproducible technical and workflow failures.
+\item Use public/synthetic cases and the agreed test environment.
+\item Record the expected behavior, actual behavior, and consequence.
+\item Tie severity to the project's declared use and boundary.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Four failure axes guide peer design review}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.22\linewidth-5.28pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.44\linewidth-10.56pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.34\linewidth-8.16pt\relax}}
+\toprule
+\textbf{Failure axis} & \textbf{Specific defect to test} & \textbf{Required review artifact} \\ \midrule
+Technical & Unit mismatches, non-convergence, or geometry overlap. & Solver logs, statepoint hash and residual plots. \\[2pt]
+Agentic & Hallucinated tool calls, runaway loops, or unverified output. & Harness execution trace and command history. \\[2pt]
+Security & Prompt injection via inputs, broad permissions, or leaked keys. & OpenCode configuration and tool arguments. \\[2pt]
+Information handling & Unapproved external egress, missing hashes, or boundary drift. & Data inventory, flow map and signed decision memo. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A useful finding is reproducible}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.27\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.73\linewidth-11.68pt\relax}}
+\toprule
+\textbf{Field} & \textbf{Required content} \\ \midrule
+Identifier and severity & Unique label with impact rationale \\[2pt]
+Preconditions & Exact version, data and configuration \\[2pt]
+Steps & Commands or inputs to reproduce \\[2pt]
+Expected / actual & Observable difference and artifacts \\[2pt]
+Disposition & Fix, scope reduction, or documented acceptance \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Respond to a stale-result finding}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The report reused a successful output after the input changed.
+\item Identify the immediate containment action.
+\item Specify a durable fix and a regression test.
+\item Which earlier results need to be rerun?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{One worked approach: containing a stale result}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Containment: mark the affected report and cases as invalidated, and stop citing those outputs in any downstream document.
+\item Durable fix: bind result reuse to the input hash and solver identity, so a changed input cannot retrieve the older success record.
+\item Regression test: the changed-input reuse test; a changed input hash must not return the previous result.
+\item Rerun scope: rerun every result whose provenance may have mismatched, and record the rerun in the manifest and the dossier review response.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Make the handoff work on a clean machine}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Document Linux prerequisites and pinned project dependencies.
+\item Provide .env.example with placeholders and startup instructions.
+\item Include a public sample, expected result, and failure demonstration.
+\item Retain versions, licenses, limitations, and ownership.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Grade evidence and engineering judgment}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-6.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.35\linewidth-8.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4\linewidth-9.6pt\relax}}
+\toprule
+\textbf{Component} & \textbf{Draft weight} & \textbf{What earns credit} \\ \midrule
+Proposal & 10\% & Feasible scope and boundary \\[2pt]
+Build milestones & 30\% & Working tools and integration \\[2pt]
+Evaluation + hardening & 30\% & Relevant tests and honest limits \\[2pt]
+Review response & 10\% & Reproduced findings and closure \\[2pt]
+Final report + demo & 20\% & Traceable results and clean handoff \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Final demonstration: show the complete chain}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item State the engineering question and approved inputs.
+\item Run the workflow from a clean, documented starting point.
+\item Trace one result to its calculation or source evidence.
+\item Demonstrate a failure, then defend the accepted scope.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Example capstone acceptance contract}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.26\linewidth-4.16pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.74\linewidth-11.84pt\relax}}
+\toprule
+\textbf{Deliverable} & \textbf{Concrete acceptance evidence} \\ \midrule
+OpenMC comparison & Two identity-bound runs, geometry/convergence review and uncertainty-aware comparison. \\[2pt]
+Agent workflow & Scoped handoffs, permission demonstration and one verifier-found defect. \\[2pt]
+Reproduction & A fresh environment can regenerate inputs and rerun an approved smoke case. \\[2pt]
+Handoff & No embedded credentials; clear data prerequisites, limitations and owner. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{What you should carry into engineering practice}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Use models where interpretation and orchestration help.
+\item Keep calculations, source evidence, and interfaces inspectable.
+\item Treat information handling and verification as design inputs.
+\item Accept a system only for the scope its evidence supports.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Capstone exit ticket: defending an agentic workflow}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item How do you demonstrate that the model did not hallucinate calculation outputs?
+\item How is the project's regulatory information boundary verified and enforced?
+\item What evidence demonstrates that the agent operated within bounded autonomy?
+\item Under what specific conditions must the workflow stop and require human review?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{A complete answer: the capstone defense}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Calculation defense: retain solver command, exit code, input and output hashes, and compare reported values directly to the binary or JSON output artifact.
+\item Boundary enforcement: maintain an exact byte inventory and network flow map; verify that nonpublic data never traverses unapproved endpoints or external tools.
+\item Bounded autonomy: prove that file edits and bash execution were constrained by reviewed permissions, finite loop budgets, and an independent verifier gate.
+\item Mandatory escalation: stop when inputs violate physical ranges, tests reveal unhandled exceptions, new external destinations are requested, or regulatory scope is ambiguous.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\end{itemize}\end{frame}
+\end{document}

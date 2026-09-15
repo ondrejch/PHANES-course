@@ -1,0 +1,27 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{phanes-beamer}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs,tabularx,listings,tikz}
+\definecolor{UTorange}{HTML}{BF5700}
+\definecolor{UTink}{HTML}{252525}
+\definecolor{UTgray}{HTML}{626262}
+\setbeamercolor{normal text}{fg=UTink,bg=white}
+\setbeamercolor{structure}{fg=UTorange}
+\setbeamercolor{frametitle}{fg=UTorange}
+\setbeamercolor{title}{fg=UTorange}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamerfont{title}{size=\huge,series=\bfseries}
+\setbeamersize{text margin left=7mm,text margin right=7mm}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hspace{7mm}\color{UTgray}\scriptsize PHANES Initiative\hfill Module \ModuleID\quad\insertframenumber/\inserttotalframenumber\hspace{7mm}\vspace{3mm}}
+\setbeamertemplate{itemize items}[circle]
+\setbeameroption{hide notes}
+\lstset{basicstyle=\ttfamily\fontsize{9.4}{11}\selectfont,columns=fullflexible,keepspaces=true,breaklines=true,showstringspaces=false,aboveskip=3mm,belowskip=2mm}
+\newcommand{\ModuleID}{00}
+
+\usetikzlibrary{arrows.meta,positioning}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setlength{\emergencystretch}{2em}
+\raggedright

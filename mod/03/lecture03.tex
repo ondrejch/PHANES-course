@@ -1,0 +1,349 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{03}
+\title{Agentic software development}
+\subtitle{Planner, researcher, implementer, verifier, tests, documentation, and the user}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{One loop, several clearly bounded roles}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Planner: convert the user's objective into a small sequence with acceptance conditions and unresolved decisions.
+\item Researcher: inspect the repository and primary documentation; return facts with paths, versions and sources.
+\item Implementer: make the agreed code change. Verifier: challenge the diff and the evidence independently.
+\item Test writer: construct requirement-driven checks. Documentation writer: describe the behavior that actually passed.
+\item The user owns scope, consequential assumptions, resource limits, and final acceptance.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{The development loop includes feedback}
+\begin{center}
+\begin{tikzpicture}[node distance=5mm and 9mm, every node/.style={draw=UTorange,rounded corners,align=center,font=\small,minimum height=7mm}, >={Stealth}]
+\node (user) {User: scope and acceptance};
+\node[below left=of user] (plan) {Planner};
+\node[below right=of user] (research) {Researcher};
+\node[below=15mm of user] (impl) {Implementer};
+\node[below left=of impl] (verify) {Verifier};
+\node[below right=of impl] (test) {Test writer};
+\node[below=16mm of impl] (docs) {Documentation + user review};
+\draw[->] (user)--(plan); \draw[->] (user)--(research);
+\draw[->] (plan)--(impl); \draw[->] (research)--(impl);
+\draw[->] (impl)--(verify); \draw[->] (impl)--(test);
+\draw[->] (verify)--(docs); \draw[->] (test)--(docs);
+\draw[->] (verify.west) to[bend left=45] (impl.west);
+\end{tikzpicture}\end{center}
+\end{frame}
+\begin{frame}[t,fragile]{Define a handoff artifact for every role}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-3.2pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.8\linewidth-12.8pt\relax}}
+\toprule
+\textbf{Role} & \textbf{Handoff that another role can inspect} \\ \midrule
+Planner & Task decomposition, files in scope, assumptions, risks, acceptance tests and stop conditions. \\[2pt]
+Researcher & Repository facts and API references; source/version, relevant excerpt, uncertainty and proposed interface. \\[2pt]
+Implementer & Minimal patch, explanation of changed behavior, commands run and unresolved failures. \\[2pt]
+Verifier & Findings tied to requirements, reproducible failures, evidence gaps and a disposition. \\[2pt]
+Test / docs writers & Independent tests and expected outcomes; then runnable instructions, limitations and examples. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Start with a task contract}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Example feature: export validated calculation results to CSV while preserving case identifiers and SI units.
+\item Scope: edit the exporter and tests; do not change the physics calculator or accepted reference values.
+\item Definition of done: correct columns, deterministic ordering, invalid-record rejection, and a documented CLI example.
+\item Budget: two implementation/verification cycles before returning a concrete blocker; no network installs or publishing without a new decision.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{What the user should ask the planner}
+\begin{lstlisting}
+Plan a CSV exporter for the existing result schema.
+Inspect the repository first. Identify the files to change,
+schema assumptions, invalid-input behavior, and acceptance tests.
+Do not modify the calculator or relax existing tests.
+Ask only about decisions that change the contract.
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A useful response names concrete files and unresolved choices, not a generic software-development checklist.
+\item Approve the plan's scope and test criteria; correct any mistaken physical or project assumption now.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Research should resolve implementation uncertainty}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Inspect existing schemas, tests, dependencies and naming conventions before searching for a new library.
+\item For an unfamiliar API, consult the exact version's primary documentation and identify the required call signature.
+\item Return the chosen approach with supporting paths or URLs and a short account of rejected alternatives.
+\item Mark unknowns explicitly. Do not turn a model's recollection into a fact or introduce dependencies without a reason.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{The implementer works inside the accepted scope}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Change the smallest coherent set of files that satisfies the contract.
+\item Preserve unrelated user edits and existing public interfaces unless the agreed change requires otherwise.
+\item Run the relevant checks and retain exact commands, exit codes and output artifacts.
+\item When an assumption fails, stop the dependent work and return the specific fact that needs resolution.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{The verifier must be able to disagree}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Start from the requirement and the actual diff, not just the implementer's summary.
+\item Inspect edge cases: missing fields, invalid units, stale outputs, partial writes and changed assumptions.
+\item Reproduce a representative success and at least one failure path where execution access is authorized.
+\item Return a specific finding or a scoped acceptance statement, with the evidence and remaining limits.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Test design comes from requirements}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.28\linewidth-4.48pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.72\linewidth-11.52pt\relax}}
+\toprule
+\textbf{Requirement} & \textbf{Test that can distinguish correct from incorrect} \\ \midrule
+Preserve identity & Two equal values with different case IDs must remain distinct rows. \\[2pt]
+Reject invalid units & A record labeled degrees C where K is required must fail explicitly. \\[2pt]
+Avoid partial success & One malformed record must not leave an apparently complete output file. \\[2pt]
+Stable output & Different input ordering produces the declared canonical row order. \\[2pt]
+No stale result & Changed input cannot reuse an output bound to an earlier input hash. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Documentation follows observed behavior}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Describe prerequisites, configuration variables, command syntax, input/output schemas and one checked example.
+\item State known limitations and failure behavior, including what the command will not overwrite.
+\item Link acceptance evidence and identify any step that was not executed in the current environment.
+\item When implementation changes the interface, update both the example and its associated test.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{The user has four main interaction points}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.24\linewidth-3.84pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.76\linewidth-12.16pt\relax}}
+\toprule
+\textbf{When} & \textbf{Useful user action} \\ \midrule
+Before planning & State objective, context, accepted inputs, constraints and required output. \\[2pt]
+At plan review & Resolve material ambiguity; accept files in scope, test criteria and resource budget. \\[2pt]
+At exceptions & Decide changed physics, new dependency, larger compute job or external disclosure. \\[2pt]
+At handoff & Review diff, test evidence, unresolved findings, runnable docs and final result. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A verifier reports a real defect}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The exporter labels every row "K", but one input actually stores degrees C.
+\item Verifier handoff: exact input file, observed row, violated unit contract and a reproducing command.
+\item Implementer response: reject the malformed record or implement the explicitly agreed conversion.
+\item Test writer adds the distinguishing case; docs describe the accepted unit contract. The user decides whether conversion changes scope.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Permissions should follow role responsibilities}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Role} & \textbf{Default classroom authority} \\ \midrule
+Planner / researcher & Read approved project files; no edits or shell execution by default. Research sources may be preloaded. \\[2pt]
+Implementer & Read project files; request scoped edits and the relevant local test commands. \\[2pt]
+Verifier & Read diff and evidence; request independent tests; no silent code repair. \\[2pt]
+Test writer & Request edits under tests/ and approved test runs; no changes to acceptance requirements. \\[2pt]
+Docs writer & Request edits under docs/ and checked examples; no publishing authority. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{OpenCode permission syntax is explicit}
+\begin{lstlisting}
+"permission": {
+  "*": "ask",
+  "read": {"*": "allow", ".env": "deny", "*.env": "deny"},
+  "edit": "ask",
+  "bash": "ask",
+  "webfetch": "deny"
+}
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item allow runs automatically; ask requires an approval; deny blocks the matching action.
+\item Specific rule order matters. Inspect merged project, global and agent settings.
+\item Shell execution can read files or use the network; file-tool rules alone are not OS enforcement.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ocpermissions, occonfig. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Define a read-only planning role}
+\begin{lstlisting}
+"agent": {"course-planner": {
+  "mode": "primary",
+  "description": "Plan bounded engineering software changes",
+  "prompt": "Inspect the contract; propose files, tests and decisions.",
+  "permission": {"edit": "deny", "bash": "deny",
+                 "webfetch": "deny", "task": "deny"}
+}}
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item This example deliberately starts without delegation authority.
+\item Add role-specific delegation only when the invoked subagent's own permissions have been reviewed.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ocagents. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Allow only the intended delegated roles}
+\begin{lstlisting}
+"permission": {"task": {
+  "*": "deny",
+  "course-researcher": "allow",
+  "course-implementer": "ask",
+  "course-verifier": "allow",
+  "course-test-writer": "ask",
+  "course-doc-writer": "ask"
+}}
+\end{lstlisting}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item This task rule belongs to the proposed coordinator, not the read-only example on the prior slide.
+\item Invocation permission does not define the invoked role's file and execution authority.
+\item OpenCode also supports direct user @ invocation; role access must stand on its own.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ocagents. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{A permitted command can still have broad effects}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item "Run pytest" executes repository code; test fixtures may write files, launch subprocesses or contact services.
+\item "Run Python" is a general execution capability, not a calculator-only permission.
+\item Use an unprivileged course account, reviewed dependencies, bounded working directories and appropriate network controls.
+\item Keep credentials outside the agent-visible task files; review commands and environment exposure before granting execution.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Use Git boundaries for coherent changes}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Begin with the current status and distinguish existing user edits from the requested task.
+\item Assign one owner to each edited file or use separate branches/worktrees when concurrent edits are useful.
+\item Review a coherent diff after each implementation cycle; keep failed experiments out of accepted artifacts.
+\item Merging, publishing, and changing shared infrastructure require the applicable user/project authority.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Agent, skill, and tool remain distinct}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Object} & \textbf{Example in this development loop} \\ \midrule
+Agent role & Verifier with a review prompt and restricted edit authority. \\[2pt]
+Skill & Repeatable CSV-contract review procedure with required checks and stop conditions. \\[2pt]
+Tool & Read a file, inspect a diff, execute a test or parse a result artifact. \\[2pt]
+Evidence & The actual diff, process status, test report and saved output under review. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{A skill expresses a repeatable review procedure}
+\begin{lstlisting}
+# .opencode/skills/result-review/SKILL.md
+---
+name: result-review
+description: Check result identity, units and execution provenance.
+---
+Require the input manifest, tool status and output artifact.
+Compare identifiers and units against the accepted contract.
+Reject missing, stale or nonfinite results.
+Report evidence paths and unresolved findings.
+\end{lstlisting}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: ocskills. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Bound retries and return an actionable blocker}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Retry a transient process failure only within the declared attempt/time budget.
+\item Do not retry an invalid physical assumption as if it were a temporary network problem.
+\item After repeated verification failure, report the smallest reproducer, suspected cause, failed remedies and remaining decision.
+\item Resume from that evidence after the user resolves the blocker; do not restart the project or conceal failed trials.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{OAK maps the bounded loop to named agents}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Course role} & \textbf{OAK agent} \\ \midrule
+Coordinator / planner & \texttt{lead}: bounded router; simple low-risk work goes directly to \texttt{developer}. \\[2pt]
+Researcher & \texttt{researcher}: code, documentation, API, alternative and risk investigation. \\[2pt]
+Planner & \texttt{specifier}: tasks, acceptance criteria, scope boundaries and validation plan. \\[2pt]
+Implementer & \texttt{developer}: implementation, direct-mode changes and focused validation. \\[2pt]
+Verifier & \texttt{reviewer}: final read-only review against scope and the actual diff. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{1mm}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item OAK (Apache-2.0) is an open-source OpenCode harness that keeps the loop local, inspectable, and reproducible.
+\item Its shipped default permissions match the course defaults: reads allowed, edits and bash ask, external directories denied.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: oak. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{OAK's bounded loops are a concrete safety contract}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item \texttt{/loop}: writes require an approved task contract; at most three iterations per invocation within a 1--6-task budget; resumable from durable state.
+\item \texttt{/autonomous}: local-checkout-only, deterministic validation each iteration, stops when the independent \texttt{reviewer} approves.
+\item The \texttt{/autonomous} contract prohibits network access, commits, pushes, merges, deployments and publication.
+\item State uses a schema-versioned JSON snapshot, append-only JSONL history, exclusive lock, contract hashing and idempotent action IDs.
+\item The harness itself is mechanically validated: agent and command contract checks plus 1{,}000+ automated tests.
+\end{itemize}
+\fontsize{10.5}{12.5}\selectfont
+\begin{itemize}\setlength{\itemsep}{1mm}
+\item A second reference implementation of the same principles: OAK targets software engineering with any provider, while PHANES applies them to private-endpoint reactor calculations.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: oak. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{A useful completion message closes the contract}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item State the changed behavior and point to the actual code or artifact.
+\item Summarize the relevant checks, including failed or unexecuted ones.
+\item List unresolved limitations and decisions that affect use.
+\item Give a runnable handoff command and the evidence needed for user acceptance.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Lab: demonstrate the complete development loop}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Implement the CSV feature using the proposed role sequence, with explicit task and handoff records.
+\item Retain one verifier-found defect and show its test, repair and recheck.
+\item Document role permissions and demonstrate that a disallowed edit is blocked in the reviewed setup.
+\item Submit the final diff, acceptance evidence, usage documentation and the user decisions that changed the work.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Sample submission: the development-loop lab}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Task and handoff records: each role records its inputs, artifacts, and acceptance criteria; the planner issues the task spec, the implementer returns the diff, the verifier returns the signed check list.
+\item Retained defect: the verifier's test found a column written without its unit header; the submission shows the failing test, the repair, the recheck passing, and the diff between the two runs.
+\item Blocked edit: the permission setting denies writes outside the lab directory; the demonstration shows the denial message and confirms that no file changed.
+\item Final package: the complete diff, passing test output, usage documentation, and a short list of user decisions (scope, naming, stopping criteria) that changed the work.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Exit ticket: bounded roles in practice}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Why must the verifier role be denied permission to edit code directly?
+\item What mechanism prevents the agent loop from cycling indefinitely on a failing test?
+\item Why does a tool allowlist in the harness fail to guarantee operating-system security?
+\item When must an unexpected observation escalate to the user rather than undergoing autonomous retry?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{A complete answer: bounded roles}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Independent challenge: allowing the verifier to repair code merges advocacy with verification, risking silent test relaxation or scope creep.
+\item Bounded retry: the planner or harness enforces an explicit iteration budget (e.g. 2--3 attempts) before converting a persistent failure into an actionable blocker.
+\item Shell execution escape: a permitted shell command (such as pytest or python) can execute arbitrary system calls and access the network regardless of file-tool rules.
+\item Escalation threshold: escalate to the user whenever an assumption alters physical inputs, interfaces, compute budgets, or regulatory information boundaries.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\item \textbf{ocpermissions}: \href{https://opencode.ai/docs/permissions/}{opencode.ai/docs/permissions}
+\item \textbf{occonfig}: \href{https://opencode.ai/docs/config/}{opencode.ai/docs/config}
+\item \textbf{ocagents}: \href{https://opencode.ai/docs/agents/}{opencode.ai/docs/agents}
+\item \textbf{ocskills}: \href{https://opencode.ai/docs/skills/}{opencode.ai/docs/skills}
+\item \textbf{oak}: \href{https://github.com/jcarlosrodicio/opencode-agent-orchestration-kit}{github.com/jcarlosrodicio/opencode-agent-orchestration-kit}
+\end{itemize}\end{frame}
+\end{document}

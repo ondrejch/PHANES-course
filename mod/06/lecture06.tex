@@ -1,0 +1,389 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{../phanes-beamer}
+\renewcommand{\ModuleID}{06}
+\title{Operating local inference}
+\subtitle{Size, serve, benchmark, and maintain models from 27B to 2.4T}
+\author{PHANES Initiative}
+\institute{The University of Texas at Austin}
+\date{September 12, 2026}
+\begin{document}
+\begin{frame}[plain]
+\titlepage
+\end{frame}
+\begin{frame}[t,fragile]{Start with the working NVFP4 launcher}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Primary: vllm/vllm-qwen38-nvfp4.sh.
+\item Served alias: qwen3.8-27b-nvfp4; HTTPS port 41883.
+\item The supplied baseline already uses MTP with three draft tokens.
+\item DFlash2 remains a separate experimental extension.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: user. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{A serving budget has several components}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Weights, including quantization metadata and unquantized tensors.
+\item KV cache and any recurrent or hybrid model state.
+\item Activations, workspaces, graph captures, and runtime allocations.
+\item Headroom for long prefill, concurrency, and operational variation.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Estimate weights with an explicit lower bound}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Raw weight bytes $\approx$ total parameters $\times$ bits per parameter / 8.
+\item Decimal GB = bytes / $10^9$; $\text{GiB} = \text{bytes} / 2^{30}$.
+\item Use total stored parameters when sizing a mixture-of-experts model.
+\item Add actual checkpoint overhead and measured runtime needs.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Weight-only memory grows quickly}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.4\linewidth-12.8pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-6.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-6.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.2\linewidth-6.4pt\relax}}
+\toprule
+\textbf{Total parameters} & \textbf{16-bit GB} & \textbf{8-bit GB} & \textbf{4-bit GB} \\ \midrule
+27B & 54 & 27 & 13.5 \\[2pt]
+70B (generic tier) & 140 & 70 & 35 \\[2pt]
+320B (GLM rounded) & 640 & 320 & 160 \\[2pt]
+2.4T (Qwen Max) & 4,800 & 2,400 & 1,200 \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: glm, qmax. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Use model size and workload together}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-6.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.35\linewidth-8.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4\linewidth-9.6pt\relax}}
+\toprule
+\textbf{Model case} & \textbf{Architecture fact} & \textbf{Teaching role} \\ \midrule
+Qwen3.8-27B NVFP4 & 27B class; supplied launch script & Primary class endpoint \\[2pt]
+GLM-5.3-Flash & $\approx 320$B total / 18B active & Large multimodal MoE comparison \\[2pt]
+Qwen3.8-Max & 2.4T total / 95B active & Upper-end infrastructure sizing \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: user, glm, qmax. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Why 18B active does not mean an 18B fit}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item GLM-5.3-Flash activates a subset of its experts per token.
+\item Its complete checkpoint still contains roughly 320B parameters.
+\item Compare raw FP8 weights with one 96 GB GPU.
+\item What changes if experts are kept in host RAM?
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: glm, rtx. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Worked solution: why 18B active does not fit 96 GB}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Weight bytes: about 320B parameters $\times$ 8 bits / 8 $\approx$ 320 GB in FP8, which exceeds one 96 GB GPU by a factor of about 3.3.
+\item "18B active" describes only the expert subset applied per token; the checkpoint still stores the full roughly 320B parameters.
+\item Keeping experts in host RAM moves where the bytes reside but does not remove the checkpoint; it adds transfer cost and requires explicit runtime support.
+\item The decision is therefore a multi-GPU or multi-node layout, checked against measured usable bytes, not a choice of which 18B subset to keep.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: glm, rtx. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Consider three hardware classes}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-6.0pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.35\linewidth-8.4pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.4\linewidth-9.6pt\relax}}
+\toprule
+\textbf{Class} & \textbf{Capacity illustration} & \textbf{What to investigate} \\ \midrule
+One 96 GB GPU & 96 GB nominal VRAM & 27B baseline; profile long context \\[2pt]
+Four 96 GB GPUs & 384 GB aggregate & GLM FP8 fit margin and PCIe cost \\[2pt]
+Eight 288 GB GPUs & 2,304 GB aggregate & Trillion-scale quantized weights \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: rtx, b300. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Size GLM for four 96 GB GPUs}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Nominal aggregate memory: 384 GB.
+\item Idealized 320B FP8 weights: 320 GB, leaving 64 GB.
+\item The recipe reports about 306 GiB of checkpoint weights.
+\item What else must fit, and what evidence decides feasibility?
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: glmrecipe. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Worked solution: the GLM sizing gap}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The recipe checkpoint is about 306 GiB, roughly 328.6 decimal GB, so the weights leave about 55.4 GB of the nominal 384 GB.
+\item What else must fit: the KV cache for live requests, activations and workspace, runtime overhead, and the per-device split of a four-way partition.
+\item Feasibility evidence: each GPU's actual usable bytes, a measured memory profile at representative context and concurrency, and kernel support for the precision on this hardware.
+\item Until that evidence exists, 55.4 GB is a nominal margin, not a guarantee; do not promise the recipe's full 1M context.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: glmrecipe. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Size Qwen Max beyond a workstation}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Idealized 4-bit weights: 1.2 TB; 8-bit weights: 2.4 TB.
+\item An eight-B300 example provides 2.304 TB nominal GPU memory.
+\item 8-bit weights alone exceed that capacity.
+\item 4-bit arithmetic leaves room, but is not a deployment guarantee.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: qmax, b300. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Not every served model is a chat model}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item An embedding model turns text into a fixed-size vector instead of generating tokens; it has no chat loop and no tool calls.
+\item Retrieval quality depends on the embedding revision, so an index must record the model version that built it.
+\item Embedding workloads are short and batch-oriented, so a smaller model often serves them well at low memory cost.
+\item The class LLM endpoint does not automatically provide embeddings; serving one is a separate configuration with its own budget and contract.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Context can dominate the remaining memory}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item A simple attention KV estimate depends on layers, KV heads, and head size.
+\item Multiply per-token state by live tokens across requests.
+\item Hybrid attention and recurrent state need architecture-specific accounting.
+\item Use measured server capacity for the selected model and build.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Four sequences are not four full contexts}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The baseline allows up to four active sequences.
+\item Its configured per-request limit is 262,144 tokens.
+\item Four full requests would need state for 1,048,576 live tokens.
+\item Scheduler admission and memory capacity must both be checked.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: user. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{GPU topology affects distributed serving}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Tensor parallelism partitions operations within model layers.
+\item Pipeline parallelism partitions layer groups.
+\item Expert parallelism distributes MoE experts across devices.
+\item Communication and per-device balance can limit scaling.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: parallel, glmrecipe. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Host offload exchanges capacity for other costs}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Host RAM can store weights that do not fit in VRAM.
+\item CPU memory bandwidth, NUMA placement, and transfers become important.
+\item An engine may transfer weights or compute selected work on CPU.
+\item Measure usable interaction latency, not just successful loading.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Plan the complete serving host}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item RAM and storage for model staging, runtime, logs, and rollback.
+\item PCIe lanes and device topology appropriate to the GPU count.
+\item Power, cooling, rack space, and maintenance access.
+\item Network capacity and account controls for the class workload.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Read the primary settings before changing them}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.27\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.73\linewidth-11.68pt\relax}}
+\toprule
+\textbf{Setting} & \textbf{Supplied value} \\ \midrule
+Weight checkpoint & unsloth/Qwen3.8-27B-NVFP4 \\[2pt]
+Context / max sequences & 262144 / 4 \\[2pt]
+GPU memory utilization & 0.92 \\[2pt]
+KV cache mode & auto \\[2pt]
+Speculation & MTP, 3 draft tokens \\[2pt]
+Chat template & Local chat\_template.jinja \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: user. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Tool use depends on the serving contract}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item The baseline uses reasoning parser qwen3.
+\item It enables automatic tool choice with parser qwen3\_coder.
+\item The custom template enables and preserves thinking.
+\item Test structured calls through OpenCode after any template change.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: user. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Keep client and server configuration distinct}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Client .env: API URL, issued key, served model, and limits.
+\item Server: weight path, hardware, runtime, template, TLS, and admission.
+\item The model name in the client must match the served alias.
+\item Students do not need GPU access to use the private class endpoint.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Validate service readiness in stages}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Process: inspect startup errors and selected model settings.
+\item Transport: verify TLS, authentication, and /v1/models.
+\item Inference: complete a small public prompt.
+\item Workflow: execute a local tool and verify its result through OpenCode.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Benchmark metrics answer different questions}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.27\linewidth-4.32pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.73\linewidth-11.68pt\relax}}
+\toprule
+\textbf{Metric} & \textbf{Definition for this lab} \\ \midrule
+Time to first token & Request start to first generated token \\[2pt]
+Decode rate & Generated tokens per decode time interval \\[2pt]
+End-to-end latency & Request start to final response \\[2pt]
+Aggregate throughput & All completed output tokens / wall time \\[2pt]
+Task success & Cases meeting the predeclared correctness test \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Use a controlled benchmark matrix}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Hold tasks, output budget, sampling, and versions fixed.
+\item Compare short and long prompts at one and several clients.
+\item Record latency percentiles, throughput, errors, and GPU memory.
+\item Repeat runs and retain correctness checks alongside speed.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Choose a system for a class workload}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Eight students need responsive tool-use sessions.
+\item Most requests are short; two may carry large code excerpts.
+\item Would you maximize model size, context, or total throughput?
+\item Propose a queue/admission rule and a benchmark to justify it.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{One worked approach: sizing for the class workload}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Targets: responsive short interactive requests for eight students, with two large code excerpts handled explicitly; model size is not the objective.
+\item Admission rule: a queue with a per-request token budget; large excerpts receive reserved capacity or are chunked so long jobs do not block short ones.
+\item Justifying benchmark: a short-prompt matrix at concurrency 1 and 8, plus a two-long-prompt contention run, recording TTFT, latency percentiles, errors, and peak memory.
+\item Decision rule: accept the configuration if short-request TTFT stays within target while the long requests are served, or if the long requests need a separate reserved capacity.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{GLM is a separate deployment experiment}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Use its own checkpoint, model-specific template, and parsers.
+\item The current recipe gives FP8 deployment and hardware guidance.
+\item Begin with modest context and concurrency, then profile upward.
+\item Compare task quality and latency against the Qwen baseline.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: glmrecipe, glm. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Quantization is a quality experiment too}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Weight precision and cache precision are independent choices.
+\item Check kernel support for the exact accelerator and model.
+\item Compare numerical-task, citation, and tool-use outcomes.
+\item Accept a faster configuration only within its demonstrated scope.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{DFlash2 belongs in an isolated experiment}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Status: instructor reports current instability.
+\item Retain the working NVFP4/MTP environment as the baseline.
+\item Compare crashes, output validity, accepted draft work, and latency.
+\item Promote only after repeatable correctness and stability evidence.
+\end{itemize}
+\vfill{\fontsize{6.5}{8}\selectfont\color{UTgray} Sources: user. See references and instructor notes.\par}
+\end{frame}
+\begin{frame}[t,fragile]{Operate with a rollback path}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Record driver, CUDA, engine, model revision, and template hash.
+\item Retain a working environment and a known-good configuration.
+\item Test updates on public tasks before returning the class service.
+\item Monitor failures and capacity without exposing credentials.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Diagnose three different out-of-memory cases}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Failure while loading weights.
+\item Failure during a very long prompt prefill.
+\item Failure only when several sessions are active.
+\item Which measurements and configuration changes fit each case?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{One worked approach: diagnosing the three OOM cases}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item OOM at weight loading: measure checkpoint size, precision, and per-device placement; remedies are a different quantization, expert placement, or more devices.
+\item OOM during a long prefill: measure activation and workspace headroom against the batch token budget; remedies are a lower prompt limit or a lower batch-token budget for that request.
+\item OOM only under concurrency: measure the live cache state and the admission limit; remedies are a per-request token budget and an explicit queue.
+\item Each case points to a different measurement; a single universal "increase memory utilization" remedy does not fit all three.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Record a benchmark row completely}
+\fontsize{10.5}{12.5}\selectfont\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{\dimexpr 0.23\linewidth-3.68pt\relax}>{\raggedright\arraybackslash}p{\dimexpr 0.77\linewidth-12.32pt\relax}}
+\toprule
+\textbf{Field group} & \textbf{Required values} \\ \midrule
+Identity & Model/checkpoint, engine/build, GPU topology, precision, template hash. \\[2pt]
+Workload & Prompt tokens, generated tokens, concurrency, task ID, cold/warm cache. \\[2pt]
+Timing & TTFT, request latency, measurement interval and client-side timeout. \\[2pt]
+Outcomes & Success/failure, validity checks, peak observed memory and raw log path. \\[2pt]
+\bottomrule\end{tabular}\par\vspace{2mm}
+\end{frame}
+\begin{frame}[t,fragile]{Calculate throughput without conflating latency}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Illustrative run: four requests each generate 600 tokens; the batch completes in 40 seconds.
+\item Aggregate output throughput is 2,400/40 = 60 tokens/s. This does not imply each user received 60 tokens/s.
+\item If each request had 5 s to first token and 35 s of decode, its approximate decode rate is 600/35 = 17.1 tokens/s.
+\item Report completion order, individual timings and failures; do not infer latency percentiles from one batch.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Lab: weights to a measured endpoint}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Inspect and launch the sanitized primary configuration on an approved host.
+\item Connect local OpenCode through the shared .env workflow.
+\item Benchmark a controlled matrix and verify engineering task outcomes.
+\item Compare GLM or a second precision; explore DFlash2 only optionally.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Sample submission: the benchmark lab}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Setup record: the sanitized launch configuration, exact checkpoint and engine build, GPU topology, template hash, and the .env client workflow used for connection.
+\item Benchmark table: one complete row per matrix cell (model, precision, context, concurrency) with timings, outcomes, peak memory, and the raw-log path.
+\item Correctness alongside speed: engineering task outcomes (for example, the heat-balance value against the analytical result) recorded per configuration.
+\item Recommendation and limits: a justified workload recommendation, untested configurations stated as untested, and the GLM or second-precision comparison treated as a separate experiment.
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{Exit ticket: defend a capacity claim}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Which bytes are estimates, and which are measurements?
+\item Which context and concurrency were actually tested?
+\item What hardware or runtime assumption could break the claim?
+\item What result would make you reject the configuration?
+\end{itemize}
+\end{frame}
+\begin{frame}[t,fragile]{A complete answer: defending the capacity claim}
+\fontsize{11.5}{14}\selectfont
+\begin{itemize}\setlength{\itemsep}{2mm}
+\item Estimates versus measurements: the weight bytes are a lower-bound estimate from the checkpoint size; the per-device memory and latency percentiles are measured on the tested configuration.
+\item Tested scope: name the exact model revision, context lengths, and concurrency levels actually run; untested combinations are outside the claim.
+\item Fragile assumption: the usable bytes per GPU after driver and runtime overhead, or the kernel support for the precision on this accelerator.
+\item Rejection criteria: an OOM at the advertised concurrency, or a correctness failure on a held-out task, invalidates the configuration.
+\end{itemize}
+\end{frame}
+\begin{frame}[t]{References 1}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{curriculum}: User-supplied PHANES curriculum: mod/01 through mod/08/README.md.
+\item \textbf{colors}: \href{https://umac.utexas.edu/brand-center/colors/}{umac.utexas.edu/brand-center/colors}
+\item \textbf{user}: User-supplied vllm(1).zip: vllm/vllm-qwen38-nvfp4.sh, README.md, chat\_template.jinja; reviewed 2026-09-05.
+\item \textbf{glm}: \href{https://huggingface.co/zai-org/GLM-5.3-Flash}{huggingface.co/zai-org/GLM-5.3-Flash}
+\item \textbf{qmax}: \href{https://www.alibabacloud.com/en/press-room/alibaba-unveils-qwen3-8-max?_p_lc=1}{alibabacloud.com/en/press-room/alibaba-unveils-qwen3-8-max?\_p\_lc=1}
+\item \textbf{rtx}: \href{https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000.md}{nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000.md}
+\item \textbf{b300}: \href{https://www.nvidia.com/en-us/data-center/dgx-b300/}{nvidia.com/en-us/data-center/dgx-b300}
+\end{itemize}\end{frame}
+\begin{frame}[t]{References 2}
+\fontsize{9}{12}\selectfont\begin{itemize}\setlength{\itemsep}{3mm}
+\item \textbf{glmrecipe}: \href{https://recipes.vllm.ai/zai-org/GLM-5.3-Flash}{recipes.vllm.ai/zai-org/GLM-5.3-Flash}
+\item \textbf{parallel}: \href{https://docs.vllm.ai/en/v0.5.1/serving/distributed_serving.html}{docs.vllm.ai/en/v0.5.1/serving/distributed\_serving.html}
+\end{itemize}\end{frame}
+\end{document}
